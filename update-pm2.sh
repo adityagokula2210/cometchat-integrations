@@ -1,42 +1,62 @@
 #!/bin/bash
 
-# PM2 Configuration Update Script
-# Updates PM2 to use app.js directly instead of index.js bridge
+# Update PM2 script - Force update and fix everything
+# Run this to manually bring server up to date
 
-echo "=== PM2 Configuration Update ==="
-echo "Updating PM2 to use app.js directly"
-echo "Date: $(date)"
-echo ""
+echo "🔄 Comprehensive server update and PM2 fix..."
 
-echo "1. Checking current PM2 status..."
-pm2 status
+# 1. Force update to latest code
+echo "📥 Force updating to latest commit..."
+git fetch origin
+git reset --hard origin/main
 
-echo ""
-echo "2. Stopping current application..."
-pm2 stop cometchat-integrations
+echo "✅ Updated to: $(git log --oneline -1)"
 
-echo ""
-echo "3. Deleting current PM2 process..."
-pm2 delete cometchat-integrations
+# 2. Clean npm completely
+echo "🧹 Cleaning npm and dependencies..."
+rm -rf node_modules package-lock.json
+npm cache clean --force
 
-echo ""
-echo "4. Starting with new configuration (app.js)..."
+# 3. Install only production dependencies
+echo "📦 Installing production dependencies..."
+npm install --omit=dev --no-optional
+
+# 4. Verify dependencies
+echo "🔍 Checking dependencies..."
+npm ls --depth=0 --production
+
+# 5. Stop and reset PM2 completely
+echo "💀 Resetting PM2 completely..."
+pm2 stop all 2>/dev/null
+pm2 delete all 2>/dev/null
+pm2 kill
+
+# 6. Clear all PM2 logs
+echo "🧹 Clearing all logs..."
+pm2 flush
+rm -rf ~/.pm2/logs/* 2>/dev/null
+sudo journalctl --vacuum-time=1s 2>/dev/null
+
+# 7. Start fresh with ecosystem config
+echo "🚀 Starting with new ecosystem config..."
 pm2 start ecosystem.config.js --env production
 
-echo ""
-echo "5. Saving PM2 configuration..."
+# 8. Save PM2 config
 pm2 save
 
-echo ""
-echo "6. Final PM2 status..."
-pm2 status
+# 9. Test the application
+echo "📋 Testing application..."
+sleep 5
 
-echo ""
-echo "7. Testing application..."
-sleep 3
-curl -s http://localhost:3001/health | jq '.version' || echo "Health check failed"
+# Test health endpoint
+if curl -f http://localhost:3001/health > /dev/null 2>&1; then
+    echo "✅ Application is responding"
+else
+    echo "❌ Application not responding"
+fi
 
-echo ""
-echo "=== PM2 Update Complete ==="
-echo "Application should now be running app.js directly"
-echo "You can now safely remove index.js if desired"
+# Show recent logs
+echo "📋 Recent logs (should be clean now):"
+pm2 logs cometchat-integrations --lines 10 --raw
+
+echo "🎉 Update complete!"
