@@ -1,0 +1,21 @@
+{
+  "builds": [
+    {
+      "src": "index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/cometchat-integrations/telegram/(.*)",
+      "dest": "/index.js"
+    },
+    {
+      "src": "/cometchat-integrations/telegram",
+      "dest": "/index.js"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}
