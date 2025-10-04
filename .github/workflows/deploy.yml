@@ -26,7 +26,8 @@ jobs:
           echo "📥 Pulling latest code from GitHub..."
           git pull origin main
           echo "📦 Installing dependencies..."
-          npm install --production
+          npm cache clean --force
+          npm install --production --no-optional
           echo "🔄 Restarting application..."
           pm2 restart cometchat-integrations
           echo "✅ Deployment complete!"

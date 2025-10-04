@@ -20,6 +20,14 @@ echo "✅ Updated to: $(git log --oneline -1)"
 echo "📦 Installing dependencies..."
 npm install --production
 
+# Clean npm cache if there are dependency issues
+if [ $? -ne 0 ]; then
+    echo "🧹 Cleaning npm cache and retrying..."
+    npm cache clean --force
+    rm -rf node_modules package-lock.json
+    npm install --production
+fi
+
 # Create the comprehensive logging fix if it doesn't exist
 if [ ! -f "fix-logging-comprehensive.sh" ]; then
     echo "🛠️ Creating logging fix script..."
