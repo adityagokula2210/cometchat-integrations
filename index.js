@@ -30,7 +30,8 @@ app.get('/', (req, res) => {
         endpoints: {
             health: '/health',
             root: '/',
-            telegram: '/telegram'
+            telegram: '/telegram',
+            cometchat: '/cometchat'
         }
     });
 });
@@ -76,6 +77,44 @@ app.post('/telegram', (req, res) => {
             message: 'Error processing Telegram data',
             error: error.message,
             timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// CometChat POST route for data processing
+app.post('/cometchat', (req, res) => {
+    try {
+        const { body } = req;
+        
+        console.log('📥 Received CometChat POST request:', {
+            timestamp: new Date().toISOString(),
+            body: body,
+            headers: req.headers
+        });
+
+        // Process the incoming CometChat data here
+        // This could be CometChat webhooks, user events, messages, etc.
+        
+        res.status(200).json({
+            success: true,
+            message: 'CometChat data received successfully',
+            timestamp: new Date().toISOString(),
+            received: {
+                bodySize: JSON.stringify(body).length,
+                hasData: Object.keys(body).length > 0,
+                service: 'cometchat'
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Error processing CometChat POST:', error);
+        
+        res.status(500).json({
+            success: false,
+            message: 'Error processing CometChat data',
+            error: error.message,
+            timestamp: new Date().toISOString(),
+            service: 'cometchat'
         });
     }
 });
