@@ -1,7 +1,7 @@
 module.exports = {
   apps: [{
     name: 'cometchat-integrations',
-    script: 'app.js',
+    script: 'index.js',
     instances: 1,
     autorestart: true,
     watch: false,
