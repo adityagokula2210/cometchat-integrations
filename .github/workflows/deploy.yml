@@ -12,42 +12,26 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: Setup SSH key
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
       
-    - name: Deploy to EC2
-      run: |
-        ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} << 'EOF'
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: 22
+        script: |
           echo "🚀 Starting deployment..."
-          
-          # Navigate to project directory
           cd /var/www/cometchat-integrations
-          
-          # Pull latest changes
           echo "📥 Pulling latest code from GitHub..."
           git pull origin main
-          
-          # Install/update dependencies
           echo "📦 Installing dependencies..."
           npm install --production
-          
-          # Restart PM2 application
           echo "🔄 Restarting application..."
           pm2 restart cometchat-integrations
-          
-          # Show status
           echo "✅ Deployment complete!"
           pm2 status
-          
-          # Test application
           echo "🌐 Testing application..."
           sleep 3
           curl -f http://localhost:3001/health || echo "❌ Health check failed"
-          
           echo "🎉 Deployment finished successfully!"
-        EOF
