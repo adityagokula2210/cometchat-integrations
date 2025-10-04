@@ -2,8 +2,7 @@ name: Deploy to EC2
 
 on:
   push:
-    branches: [ ma          echo "🎉 Deployment finished successfully!"
-        EOFn ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -50,4 +49,5 @@ jobs:
           sleep 3
           curl -f http://localhost:3001/health || echo "❌ Health check failed"
           
-          echo "� Deployment finished successfully!"
+          echo "🎉 Deployment finished successfully!"
+        EOF
