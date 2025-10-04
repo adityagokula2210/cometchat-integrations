@@ -3,6 +3,9 @@
  * Centralizes all environment variables and app settings
  */
 
+// Load environment variables from .env file
+require('dotenv').config();
+
 const config = {
   // Server Configuration
   server: {

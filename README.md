@@ -109,8 +109,13 @@ CORS_ORIGINS=*
 
 3. **Configure environment variables**
    ```bash
+   # Copy the template and configure your values
    cp .env.example .env
-   # Edit .env with your configuration
+   
+   # Edit .env with your actual credentials:
+   # - Get CometChat credentials from: https://app.cometchat.com/
+   # - Get Telegram bot token from: @BotFather on Telegram
+   nano .env
    ```
 
 4. **Start development server**

@@ -1,0 +1,39 @@
+# SSL Setup Commands for AWS EC2 (Amazon Linux 2023)
+# SSH into your server and run these commands one by one
+
+# 1. Connect to your server
+ssh -i your-key.pem ec2-user@3.17.207.221
+
+# 2. Install Certbot (Amazon Linux 2023 method)
+sudo dnf update -y
+sudo dnf install -y python3-pip python3-devel gcc openssl-devel libffi-devel
+sudo pip3 install certbot certbot-nginx
+
+# 3. Verify certbot installation
+which certbot
+certbot --version
+
+# 4. Stop nginx temporarily (required for certificate generation)
+sudo systemctl stop nginx
+
+# 5. Generate SSL certificate (standalone mode)
+sudo certbot certonly --standalone -d adityagokula.com -d www.adityagokula.com --email your-email@example.com --agree-tos --non-interactive
+
+# 6. Update nginx configuration
+sudo nano /etc/nginx/nginx.conf
+
+# 7. Start nginx again
+sudo systemctl start nginx
+
+# 8. Test configuration
+sudo nginx -t
+
+# 9. Reload nginx
+sudo systemctl reload nginx
+
+# 10. Test SSL
+curl -I https://adityagokula.com
+
+# 11. Set up automatic renewal (Amazon Linux 2023)
+echo "0 12 * * * /usr/local/bin/certbot renew --quiet --no-self-upgrade" | sudo crontab -
+sudo crontab -l  # Verify cron job was added
