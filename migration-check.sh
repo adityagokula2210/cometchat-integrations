@@ -1,58 +1,65 @@
 #!/bin/bash
 
-# Migration script to ensure smooth transition from old to new architecture
-# This script can be run on the server to debug deployment issues
+# Migration script to bring server up to date and fix logging
+# Run this if auto-deployment is not working
 
-echo "=== CometChat Integrations Architecture Migration ==="
-echo "Date: $(date)"
-echo ""
+echo "🔄 Manual deployment and logging fix migration..."
 
-echo "1. Checking Node.js version..."
-node --version
-echo ""
+# Check current status
+echo "📍 Current commit: $(git log --oneline -1)"
+echo "📍 Current directory: $(pwd)"
 
-echo "2. Checking if app.js exists..."
-if [ -f "app.js" ]; then
-    echo "✅ app.js found"
-else
-    echo "❌ app.js not found"
+# Force update to latest
+echo "📥 Fetching latest changes..."
+git fetch origin
+git reset --hard origin/main
+
+echo "✅ Updated to: $(git log --oneline -1)"
+
+# Install dependencies
+echo "📦 Installing dependencies..."
+npm install --production
+
+# Create the comprehensive logging fix if it doesn't exist
+if [ ! -f "fix-logging-comprehensive.sh" ]; then
+    echo "🛠️ Creating logging fix script..."
+    cat > fix-logging-comprehensive.sh << 'EOF'
+#!/bin/bash
+
+echo "🔧 Comprehensive PM2 logging fix..."
+
+# Stop and clean PM2
+pm2 stop cometchat-integrations
+pm2 delete cometchat-integrations
+pm2 flush
+
+# Clear system logs
+sudo journalctl --vacuum-time=1h
+
+# Restart PM2 daemon
+pm2 kill
+sleep 2
+
+# Start with new configuration
+pm2 start ecosystem.config.js --env production
+pm2 save
+
+echo "✅ PM2 restarted with clean configuration"
+sleep 3
+
+# Test
+curl -s http://localhost:3001/health > /dev/null
+pm2 logs cometchat-integrations --lines 5 --raw
+EOF
+    chmod +x fix-logging-comprehensive.sh
 fi
-echo ""
 
-echo "3. Checking if src directory exists..."
-if [ -d "src" ]; then
-    echo "✅ src directory found"
-    echo "   Contents:"
-    ls -la src/
-else
-    echo "❌ src directory not found"
-fi
-echo ""
+# Restart PM2
+echo "🔄 Restarting PM2..."
+pm2 restart cometchat-integrations
 
-echo "4. Testing app.js syntax..."
-node -c app.js
-if [ $? -eq 0 ]; then
-    echo "✅ app.js syntax is valid"
-else
-    echo "❌ app.js has syntax errors"
-fi
-echo ""
+# Run the logging fix
+echo "🔧 Running logging fix..."
+./fix-logging-comprehensive.sh
 
-echo "5. Checking package.json main entry..."
-main_entry=$(node -p "require('./package.json').main")
-echo "Main entry point: $main_entry"
-echo ""
-
-echo "6. Testing dependencies..."
-npm ls --depth=0
-echo ""
-
-echo "7. Checking current git commit..."
-git log --oneline -1
-echo ""
-
-echo "8. PM2 status..."
-pm2 status || echo "PM2 not running or accessible"
-echo ""
-
-echo "=== Migration Check Complete ==="
+echo "🎉 Migration complete!"
