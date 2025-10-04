@@ -6,6 +6,10 @@ module.exports = {
     autorestart: true,
     watch: false,
     max_memory_restart: '1G',
+    // Logging configuration to prevent character-by-character output
+    log_type: 'json',
+    merge_logs: true,
+    log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     env: {
       NODE_ENV: 'production',
       PORT: 3001
