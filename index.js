@@ -86,11 +86,21 @@ app.post('/cometchat', (req, res) => {
     try {
         const { body } = req;
         
-        console.log('📥 Received CometChat POST request:', {
-            timestamp: new Date().toISOString(),
-            body: body,
-            headers: req.headers
-        });
+        console.log('📥 Received CometChat POST request:');
+        console.log('Timestamp:', new Date().toISOString());
+        console.log('Full Body:', JSON.stringify(body, null, 2));
+        console.log('Headers:', JSON.stringify(req.headers, null, 2));
+        
+        // Log specific CometChat webhook details
+        if (body.trigger) {
+            console.log('🔔 Webhook Trigger:', body.trigger);
+        }
+        if (body.data && body.data.message) {
+            console.log('💬 Message Details:', JSON.stringify(body.data.message, null, 2));
+        }
+        if (body.appId) {
+            console.log('📱 App ID:', body.appId);
+        }
 
         // Process the incoming CometChat data here
         // This could be CometChat webhooks, user events, messages, etc.
