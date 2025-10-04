@@ -4,6 +4,9 @@
 # 1. Connect to your server
 ssh -i your-key.pem ec2-user@3.17.207.221
 
+# 1.1. Navigate to your project directory
+cd /var/www/cometchat-integrations
+
 # 2. Install Certbot (Amazon Linux 2023 method)
 sudo dnf update -y
 sudo dnf install -y python3-pip python3-devel gcc openssl-devel libffi-devel
