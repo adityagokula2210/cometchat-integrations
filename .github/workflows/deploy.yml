@@ -13,25 +13,29 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Deploy via SSH
-      uses: appleboy/ssh-action@v0.1.5
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.8.0
       with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.SSH_KEY }}
-        port: 22
-        script: |
-          echo "🚀 Starting deployment..."
-          cd /var/www/cometchat-integrations
-          echo "📥 Pulling latest code from GitHub..."
-          git pull origin main
-          echo "📦 Installing dependencies..."
-          npm install --production
-          echo "🔄 Restarting application..."
-          pm2 restart cometchat-integrations
-          echo "✅ Deployment complete!"
-          pm2 status
-          echo "🌐 Testing application..."
-          sleep 3
-          curl -f http://localhost:3001/health || echo "❌ Health check failed"
-          echo "🎉 Deployment finished successfully!"
+        ssh-private-key: ${{ secrets.SSH_KEY }}
+        
+    - name: Add server to known hosts
+      run: ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+      
+    - name: Deploy to EC2
+      run: |
+        ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} << 'EOF'
+        echo "🚀 Starting deployment..."
+        cd /var/www/cometchat-integrations
+        echo "📥 Pulling latest code from GitHub..."
+        git pull origin main
+        echo "📦 Installing dependencies..."
+        npm install --production
+        echo "🔄 Restarting application..."
+        pm2 restart cometchat-integrations
+        echo "✅ Deployment complete!"
+        pm2 status
+        echo "🌐 Testing application..."
+        sleep 3
+        curl -f http://localhost:3001/health || echo "❌ Health check failed"
+        echo "🎉 Deployment finished successfully!"
+        EOF
