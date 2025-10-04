@@ -3,6 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -10,14 +11,17 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
-    
+      uses: actions/checkout@v4
+      
     - name: Deploy to EC2
-      uses: appleboy/ssh-action@v0.1.8
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.SSH_KEY }}
+        port: 22
+        timeout: 60s
+        command_timeout: 10m
         script: |
           echo "🚀 Starting deployment..."
           
@@ -25,10 +29,10 @@ jobs:
           cd /var/www/cometchat-integrations
           
           # Pull latest changes
-          echo "📥 Pulling latest code..."
+          echo "📥 Pulling latest code from GitHub..."
           git pull origin main
           
-          # Install dependencies
+          # Install/update dependencies
           echo "📦 Installing dependencies..."
           npm install --production
           
@@ -41,8 +45,8 @@ jobs:
           pm2 status
           
           # Test application
-          echo "🧪 Testing application..."
+          echo "🌐 Testing application..."
           sleep 3
-          curl -s http://localhost:3001/health || echo "❌ Health check failed"
+          curl -f http://localhost:3001/health || echo "❌ Health check failed"
           
-          echo "🌐 Application deployed successfully!"
+          echo "� Deployment finished successfully!"
