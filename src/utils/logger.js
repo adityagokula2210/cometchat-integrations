@@ -5,6 +5,7 @@
 
 const config = require('../config');
 const SimpleLogger = require('./simpleLogger');
+const ProductionLogger = require('./productionLogger');
 
 class Logger {
   constructor() {
@@ -36,31 +37,14 @@ class Logger {
   log(level, message, meta = {}) {
     if (!config.logging.enableConsole) return;
 
-    // Use simple logger in production to avoid PM2 issues
-    if (config.server.env === 'production') {
-      SimpleLogger.log(level, message, meta);
+    // Use ultra-simple production logger to avoid PM2 issues
+    if (config.server.env === 'production' || process.env.SIMPLE_LOGGING === 'true') {
+      ProductionLogger.log(level, message, meta);
       return;
     }
 
-    // Ensure message is a string and meta is an object
-    const safeMessage = typeof message === 'string' ? message : String(message);
-    const safeMeta = typeof meta === 'object' && meta !== null ? meta : {};
-
-    const formattedMessage = this.formatMessage(level, safeMessage, safeMeta);
-    
-    switch (level) {
-      case 'error':
-        console.error(formattedMessage);
-        break;
-      case 'warn':
-        console.warn(formattedMessage);
-        break;
-      case 'debug':
-        console.debug(formattedMessage);
-        break;
-      default:
-        console.log(formattedMessage);
-    }
+    // Use simple logger for development
+    SimpleLogger.log(level, message, meta);
   }
 
   info(message, meta = {}) {
