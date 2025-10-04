@@ -24,6 +24,8 @@ app.get('/', (req, res) => {
     res.json({
         message: 'Welcome to CometChat Integrations!',
         service: 'Telegram Integration',
+        version: '1.0.1',
+        lastUpdated: new Date().toISOString(),
         endpoints: {
             health: '/health',
             root: '/',
