@@ -15,7 +15,8 @@ app.get('/health', (req, res) => {
         status: 'OK',
         message: 'CometChat Integrations server is running',
         timestamp: new Date().toISOString(),
-        uptime: process.uptime()
+        uptime: process.uptime(),
+        deployment: 'auto-deploy-test-v2'
     });
 });
 
