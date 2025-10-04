@@ -20,32 +20,44 @@ class Logger {
     const logEntry = {
       timestamp,
       level: level.toUpperCase(),
-      message,
+      message: String(message), // Ensure message is always a string
       ...meta
     };
 
-    return JSON.stringify(logEntry, null, 2);
+    try {
+      return JSON.stringify(logEntry, null, 2);
+    } catch (error) {
+      // Fallback if JSON.stringify fails
+      return `${timestamp} [${level.toUpperCase()}] ${String(message)}`;
+    }
   }
 
   log(level, message, meta = {}) {
     if (!config.logging.enableConsole) return;
 
-    const formattedMessage = this.formatMessage(level, message, meta);
+    // Ensure message is a string and meta is an object
+    const safeMessage = typeof message === 'string' ? message : String(message);
+    const safeMeta = typeof meta === 'object' && meta !== null ? meta : {};
+
+    const formattedMessage = this.formatMessage(level, safeMessage, safeMeta);
     
-    switch (level) {
-      case 'error':
-        console.error(formattedMessage);
-        break;
-      case 'warn':
-        console.warn(formattedMessage);
-        break;
-      case 'debug':
-        if (config.server.env === 'development') {
+    // Use process.stdout.write for more control in production
+    if (config.server.env === 'production') {
+      process.stdout.write(formattedMessage + '\n');
+    } else {
+      switch (level) {
+        case 'error':
+          console.error(formattedMessage);
+          break;
+        case 'warn':
+          console.warn(formattedMessage);
+          break;
+        case 'debug':
           console.debug(formattedMessage);
-        }
-        break;
-      default:
-        console.log(formattedMessage);
+          break;
+        default:
+          console.log(formattedMessage);
+      }
     }
   }
 
