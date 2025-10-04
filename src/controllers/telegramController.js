@@ -39,13 +39,26 @@ class TelegramController {
     try {
       const { body } = req;
 
-      // Log the webhook payload
+      // Log the complete webhook payload
       logger.telegram('webhook_received', {
         updateId: body.update_id,
         hasMessage: !!body.message,
         hasCallbackQuery: !!body.callback_query,
-        bodySize: JSON.stringify(body).length
+        bodySize: JSON.stringify(body).length,
+        fullPayload: body  // Log the complete webhook data
       });
+
+      // Log specific message details if present
+      if (body.message) {
+        logger.telegram('message_details', {
+          messageId: body.message.message_id,
+          chatId: body.message.chat?.id,
+          userId: body.message.from?.id,
+          username: body.message.from?.username,
+          text: body.message.text,
+          messageType: body.message.text ? 'text' : 'other'
+        });
+      }
 
       // Process the webhook through the service
       const result = await telegramService.processWebhook(body);

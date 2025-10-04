@@ -39,21 +39,26 @@ class CometChatController {
     try {
       const { body } = req;
 
-      // Log the full webhook payload
-      logger.info('📥 Received CometChat POST request:');
-      logger.info('Timestamp:', new Date().toISOString());
-      logger.info('Full Body:', JSON.stringify(body, null, 2));
-      logger.info('Headers:', JSON.stringify(req.headers, null, 2));
+      // Log the complete webhook payload with structured format
+      logger.cometchat('webhook_received', {
+        trigger: body.trigger,
+        appId: body.appId,
+        hasData: !!body.data,
+        bodySize: JSON.stringify(body).length,
+        fullPayload: body,  // Log the complete webhook data
+        headers: req.headers
+      });
       
-      // Log specific CometChat webhook details
-      if (body.trigger) {
-        logger.info('🔔 Webhook Trigger:', body.trigger);
-      }
+      // Log specific message details if present
       if (body.data && body.data.message) {
-        logger.info('💬 Message Details:', JSON.stringify(body.data.message, null, 2));
-      }
-      if (body.appId) {
-        logger.info('📱 App ID:', body.appId);
+        logger.cometchat('message_details', {
+          messageId: body.data.message.id,
+          messageType: body.data.message.type,
+          sender: body.data.message.sender,
+          receiver: body.data.message.receiver,
+          text: body.data.message.text,
+          category: body.data.message.category
+        });
       }
 
       // Process the webhook through the service
