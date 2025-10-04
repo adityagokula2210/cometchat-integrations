@@ -44,6 +44,42 @@ app.get('/telegram', (req, res) => {
     });
 });
 
+// Telegram POST route for webhook/data processing
+app.post('/telegram', (req, res) => {
+    try {
+        const { body } = req;
+        
+        console.log('📥 Received Telegram POST request:', {
+            timestamp: new Date().toISOString(),
+            body: body,
+            headers: req.headers
+        });
+
+        // Process the incoming data here
+        // This could be a Telegram webhook, CometChat integration data, etc.
+        
+        res.status(200).json({
+            success: true,
+            message: 'Telegram data received successfully',
+            timestamp: new Date().toISOString(),
+            received: {
+                bodySize: JSON.stringify(body).length,
+                hasData: Object.keys(body).length > 0
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Error processing Telegram POST:', error);
+        
+        res.status(500).json({
+            success: false,
+            message: 'Error processing Telegram data',
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 // Start server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
