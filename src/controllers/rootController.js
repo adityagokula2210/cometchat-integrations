@@ -16,7 +16,7 @@ class RootController {
       const apiInfo = {
         message: 'Welcome to CometChat Integrations!',
         service: 'Multi-platform Integration Hub',
-        version: '2.0.0',
+        version: '2.0.1',
         environment: config.server.env,
         lastUpdated: new Date().toISOString(),
         endpoints: {

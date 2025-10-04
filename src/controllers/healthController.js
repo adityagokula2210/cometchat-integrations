@@ -15,7 +15,7 @@ class HealthController {
     try {
       const healthData = {
         environment: config.server.env,
-        version: '2.0.0',
+        version: '2.0.1',
         services: {
           cometchat: {
             configured: !!config.cometchat.appId,

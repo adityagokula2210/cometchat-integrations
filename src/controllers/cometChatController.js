@@ -16,7 +16,7 @@ class CometChatController {
       const info = {
         service: 'CometChat Integration',
         status: 'active',
-        version: '2.0.0',
+        version: '2.0.1',
         endpoints: {
           webhook: 'POST /cometchat',
           info: 'GET /cometchat'

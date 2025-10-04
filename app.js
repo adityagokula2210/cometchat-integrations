@@ -67,7 +67,7 @@ const startServer = () => {
     logger.info('🚀 Server started successfully', {
       port: PORT,
       environment: config.server.env,
-      version: '2.0.0',
+      version: '2.0.1',
       endpoints: {
         health: `http://localhost:${PORT}/health`,
         api: `http://localhost:${PORT}/`,
