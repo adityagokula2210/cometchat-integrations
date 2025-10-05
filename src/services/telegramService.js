@@ -18,12 +18,6 @@ class TelegramService {
     try {
       const { update_id, message, callback_query } = webhookData;
 
-      logger.telegram('webhook_received', {
-        updateId: update_id,
-        hasMessage: !!message,
-        hasCallbackQuery: !!callback_query
-      });
-
       if (message) {
         return await this.handleMessage(message);
       }
@@ -32,7 +26,7 @@ class TelegramService {
         return await this.handleCallbackQuery(callback_query);
       }
 
-      logger.warn('Unknown Telegram webhook type', { webhookData });
+      logger.warn('Unknown Telegram webhook type', { updateId: update_id });
       return { processed: false, reason: 'Unknown webhook type' };
 
     } catch (error) {
@@ -45,16 +39,16 @@ class TelegramService {
    * Handle incoming Telegram message
    */
   async handleMessage(message) {
-    const { message_id, from, chat, text, date } = message;
+    const { message_id, from, chat, text } = message;
 
-    logger.telegram('message_received', {
+    // Log essential message info only
+    logger.telegram('message_processed', {
       messageId: message_id,
       fromId: from?.id,
-      fromUsername: from?.username,
       chatId: chat?.id,
       chatType: chat?.type,
-      messageText: text?.substring(0, 100) + (text?.length > 100 ? '...' : ''),
-      timestamp: new Date(date * 1000).toISOString()
+      textPreview: text?.substring(0, 50) + (text?.length > 50 ? '...' : ''),
+      isCommand: text?.startsWith('/')
     });
 
     // Process different message types
@@ -74,20 +68,14 @@ class TelegramService {
    * Handle text message
    */
   async handleTextMessage(message) {
-    const { text, from, chat } = message;
+    const { text } = message;
 
     // Handle commands
     if (text.startsWith('/')) {
       return await this.handleCommand(message);
     }
 
-    // Regular text message processing
-    logger.telegram('text_message', {
-      fromId: from?.id,
-      chatId: chat?.id,
-      textLength: text.length
-    });
-
+    // Regular text message processing - no additional logging needed
     return {
       processed: true,
       messageId: message.message_id,

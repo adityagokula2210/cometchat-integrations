@@ -39,29 +39,7 @@ class CometChatController {
     try {
       const { body } = req;
 
-      // Log the complete webhook payload with structured format
-      logger.cometchat('webhook_received', {
-        trigger: body.trigger,
-        appId: body.appId,
-        hasData: !!body.data,
-        bodySize: JSON.stringify(body).length,
-        fullPayload: body,  // Log the complete webhook data
-        headers: req.headers
-      });
-      
-      // Log specific message details if present
-      if (body.data && body.data.message) {
-        logger.cometchat('message_details', {
-          messageId: body.data.message.id,
-          messageType: body.data.message.type,
-          sender: body.data.message.sender,
-          receiver: body.data.message.receiver,
-          text: body.data.message.text,
-          category: body.data.message.category
-        });
-      }
-
-      // Process the webhook through the service
+      // Process the webhook through the service (logging handled in middleware)
       const result = await cometChatService.processWebhook(body);
 
       // Return success response with processing result
@@ -72,7 +50,7 @@ class CometChatController {
       });
 
     } catch (error) {
-      logger.error('❌ Error processing CometChat POST:', error);
+      logger.error('❌ Error processing CometChat webhook:', { error: error.message });
       return ResponseHandler.error(res, 'Error processing CometChat data', error);
     }
   }

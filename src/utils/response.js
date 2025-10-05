@@ -55,7 +55,7 @@ class ResponseHandler {
       }
     };
 
-    logger.webhook(service, 'data_received', response.received);
+    // No additional logging here - middleware handles webhook logging
     return res.status(200).json(response);
   }
 
