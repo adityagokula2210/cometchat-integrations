@@ -8,8 +8,7 @@ const config = require('./src/config');
 const logger = require('./src/utils/logger');
 
 // Middleware
-const requestLogger = require('./src/middleware/requestLogger');
-const bodyLogger = require('./src/middleware/bodyLogger');
+const webhookLogger = require('./src/middleware/webhookLogger');
 const errorHandler = require('./src/middleware/errorHandler');
 
 // Routes
@@ -27,8 +26,7 @@ app.set('trust proxy', config.server.trustProxy);
 // Global middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(requestLogger);
-app.use(bodyLogger);  // Log request bodies after they're parsed
+app.use(webhookLogger);  // Unified webhook and request logging
 
 // Routes
 app.use('/', rootRoutes);
@@ -50,7 +48,7 @@ app.use((req, res) => {
     timestamp: new Date().toISOString(),
     availableRoutes: {
       health: 'GET /health',
-      status: 'GET /status',
+      status: 'GET /status', 
       root: 'GET /',
       cometchat: 'GET|POST /cometchat',
       telegram: 'GET|POST /telegram'
