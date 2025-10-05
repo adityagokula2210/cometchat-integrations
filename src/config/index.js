@@ -28,6 +28,14 @@ const config = {
     webhookSecret: process.env.TELEGRAM_WEBHOOK_SECRET || ''
   },
 
+  // Discord Configuration
+  discord: {
+    botToken: process.env.DISCORD_BOT_TOKEN || '',
+    applicationId: process.env.DISCORD_APPLICATION_ID || '',
+    publicKey: process.env.DISCORD_PUBLIC_KEY || '',
+    webhookSecret: process.env.DISCORD_WEBHOOK_SECRET || ''
+  },
+
   // Logging Configuration
   logging: {
     level: process.env.LOG_LEVEL || 'info',

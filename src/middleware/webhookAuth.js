@@ -48,6 +48,32 @@ const webhookAuth = (service) => {
         }
       }
 
+      if (service === 'discord') {
+        // Check for Discord signature header if public key is configured
+        if (config.discord.publicKey) {
+          const signature = headers['x-signature-ed25519'];
+          const timestamp = headers['x-signature-timestamp'];
+          
+          if (!signature || !timestamp) {
+            logger.warn('Missing Discord signature headers');
+            return ResponseHandler.error(res, 'Missing signature headers', {}, 401);
+          }
+          
+          // TODO: Implement Discord signature verification using nacl
+          logger.debug('Discord signature headers present', { 
+            hasSignature: !!signature, 
+            hasTimestamp: !!timestamp 
+          });
+        }
+
+        // Validate Discord webhook structure
+        const validation = Validator.validateDiscordWebhook(body);
+        if (!validation.isValid) {
+          logger.warn('Invalid Discord webhook payload', { errors: validation.errors });
+          return ResponseHandler.error(res, 'Invalid webhook payload', { errors: validation.errors }, 400);
+        }
+      }
+
       logger.debug(`${service} webhook authentication successful`);
       next();
 

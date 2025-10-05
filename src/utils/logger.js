@@ -93,6 +93,14 @@ class Logger {
     });
   }
 
+  discord(action, data = {}) {
+    this.info(`Discord ${action}`, {
+      service: 'discord',
+      action,
+      ...data
+    });
+  }
+
   webhook(service, event, data = {}) {
     this.info(`Webhook received from ${service}`, {
       service,

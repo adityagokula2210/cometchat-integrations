@@ -47,6 +47,41 @@ class Validator {
   }
 
   /**
+   * Validate Discord webhook payload
+   */
+  static validateDiscordWebhook(body) {
+    const errors = [];
+
+    if (!body.type && body.type !== 0) {
+      errors.push('Missing required field: type');
+    }
+
+    // Type 1 is PING, which only needs type
+    if (body.type === 1) {
+      return {
+        isValid: errors.length === 0,
+        errors
+      };
+    }
+
+    // For other types, validate additional fields
+    if (body.type > 1) {
+      if (!body.id) {
+        errors.push('Missing required field: id');
+      }
+
+      if (!body.token) {
+        errors.push('Missing required field: token');
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }
+
+  /**
    * Validate webhook signature (if applicable)
    */
   static validateWebhookSignature(headers, body, secret) {
