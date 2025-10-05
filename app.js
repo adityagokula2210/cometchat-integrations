@@ -9,6 +9,7 @@ const logger = require('./src/utils/logger');
 
 // Middleware
 const requestLogger = require('./src/middleware/requestLogger');
+const bodyLogger = require('./src/middleware/bodyLogger');
 const errorHandler = require('./src/middleware/errorHandler');
 
 // Routes
@@ -27,6 +28,7 @@ app.set('trust proxy', config.server.trustProxy);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
+app.use(bodyLogger);  // Log request bodies after they're parsed
 
 // Routes
 app.use('/', rootRoutes);

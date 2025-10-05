@@ -11,36 +11,31 @@ const requestLogger = (req, res, next) => {
   const userAgent = req.get('User-Agent') || 'Unknown';
   const contentType = req.get('Content-Type') || 'unknown';
 
-  // Capture request body for logging
-  let requestBody = {};
-  if (req.body && Object.keys(req.body).length > 0) {
-    // Log the actual body content
-    requestBody = req.body;
-  } else if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
-    requestBody = 'No body or empty body';
-  }
-
-  // Log request start with body
-  const requestLogData = {
+  // Log basic request info immediately
+  logger.info('📥 Incoming request', {
     method,
     url,
     ip,
     userAgent,
     contentType,
     timestamp: new Date().toISOString()
-  };
+  });
 
-  // Add body to logs for POST/PUT/PATCH requests
-  if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
-    requestLogData.body = requestBody;
-  }
-
-  logger.info('📥 Incoming request', requestLogData);
-
-  // Override res.end to log response
+  // Override res.end to log response and capture body
   const originalEnd = res.end;
   res.end = function(chunk, encoding) {
     const duration = Date.now() - startTime;
+    
+    // Log request body for POST/PUT/PATCH after it's been parsed
+    if ((method === 'POST' || method === 'PUT' || method === 'PATCH') && req.body) {
+      logger.info('� Request body', {
+        method,
+        url,
+        body: req.body,
+        bodyType: typeof req.body,
+        bodySize: JSON.stringify(req.body || {}).length
+      });
+    }
     
     logger.info('📤 Request completed', {
       method,
