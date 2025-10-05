@@ -38,12 +38,16 @@ const webhookLogger = (req, res, next) => {
   // Log request body for webhook POST/PUT/PATCH requests
   if (isWebhook && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
     if (req.body && Object.keys(req.body).length > 0) {
+      const bodyString = JSON.stringify(req.body);
+      const prettyPayload = JSON.stringify(req.body, null, 2);
+      
+      // Single comprehensive log entry with beautified JSON
       logger.webhook(webhookService, 'payload_received', {
         method,
         url,
-        bodySize: JSON.stringify(req.body).length,
+        bodySize: bodyString.length,
         hasData: Object.keys(req.body).length > 0,
-        payload: req.body  // Full payload for debugging
+        prettyJSON: `\n${prettyPayload}`  // Beautified JSON in single log
       });
     }
   }

@@ -16,6 +16,10 @@ class ProductionLogger {
       const metaStr = Object.entries(meta)
         .filter(([k, v]) => v !== null && v !== undefined)
         .map(([k, v]) => {
+          // Handle prettyJSON specially for better formatting
+          if (k === 'prettyJSON' && typeof v === 'string') {
+            return `\n${v}`;
+          }
           // Properly stringify objects and arrays as JSON
           if (typeof v === 'object') {
             return `${k}=${JSON.stringify(v)}`;
