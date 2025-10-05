@@ -1,9 +1,0 @@
-# Deployment Test File
-# Created at: 2025-10-04
-# This file should appear on the server after git push
-
-echo "Deployment test successful!"
-echo "Files that should be present:"
-echo "- fix-logging-comprehensive.sh"
-echo "- fix-pm2-logs.sh" 
-echo "- src/utils/simpleLogger.js"

@@ -1,6 +1,30 @@
 #!/bin/bash
 
-# Update Telegram webhook to use HTTPS
+# Update webhook URLs from HTTP to HTTPS
+# This script is for reference - run manually if needed
+
+DOMAIN="adityagokula.com"
+NEW_URL="https://${DOMAIN}/cometchat-integrations/telegram"
+
+echo "🔄 This script helps update webhook URLs to HTTPS"
+echo "📍 New webhook URL: ${NEW_URL}"
+echo ""
+
+# For Telegram Bot
+echo "📱 For Telegram Bot API, use:"
+echo "curl -X POST \"https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook\" \\"
+echo "     -H \"Content-Type: application/json\" \\"
+echo "     -d '{\"url\": \"${NEW_URL}\"}'"
+echo ""
+
+# For CometChat
+echo "🗨️ For CometChat webhooks, update in dashboard:"
+echo "   - Login to CometChat dashboard"
+echo "   - Navigate to Extensions → Webhooks"
+echo "   - Update URL to: ${NEW_URL}"
+echo ""
+
+echo "✅ Use these commands manually to update your webhooks"te Telegram webhook to use HTTPS
 # Run this AFTER SSL is set up successfully
 
 # Your bot token (from your .env file)

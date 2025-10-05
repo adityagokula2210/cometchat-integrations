@@ -1,73 +1,36 @@
 #!/bin/bash
 
-# Migration script to bring server up to date and fix logging
-# Run this if auto-deployment is not working
+# Migration verification script
+# Checks if all components are properly configured after migration
 
-echo "🔄 Manual deployment and logging fix migration..."
+echo "� Checking post-migration system status..."
 
-# Check current status
-echo "📍 Current commit: $(git log --oneline -1)"
-echo "📍 Current directory: $(pwd)"
-
-# Force update to latest
-echo "📥 Fetching latest changes..."
-git fetch origin
-git reset --hard origin/main
-
-echo "✅ Updated to: $(git log --oneline -1)"
-
-# Install dependencies
-echo "📦 Installing dependencies..."
-npm install --production
-
-# Clean npm cache if there are dependency issues
-if [ $? -ne 0 ]; then
-    echo "🧹 Cleaning npm cache and retrying..."
-    npm cache clean --force
-    rm -rf node_modules package-lock.json
-    npm install --production
+# Check if running on correct port
+if curl -f http://localhost:3001/health > /dev/null 2>&1; then
+    echo "✅ Application running on port 3001"
+else
+    echo "❌ Application not responding on port 3001"
 fi
 
-# Create the comprehensive logging fix if it doesn't exist
-if [ ! -f "fix-logging-comprehensive.sh" ]; then
-    echo "🛠️ Creating logging fix script..."
-    cat > fix-logging-comprehensive.sh << 'EOF'
-#!/bin/bash
-
-echo "🔧 Comprehensive PM2 logging fix..."
-
-# Stop and clean PM2
-pm2 stop cometchat-integrations
-pm2 delete cometchat-integrations
-pm2 flush
-
-# Clear system logs
-sudo journalctl --vacuum-time=1h
-
-# Restart PM2 daemon
-pm2 kill
-sleep 2
-
-# Start with new configuration
-pm2 start ecosystem.config.js --env production
-pm2 save
-
-echo "✅ PM2 restarted with clean configuration"
-sleep 3
-
-# Test
-curl -s http://localhost:3001/health > /dev/null
-pm2 logs cometchat-integrations --lines 5 --raw
-EOF
-    chmod +x fix-logging-comprehensive.sh
+# Check HTTPS
+if curl -f https://adityagokula.com/cometchat-integrations/health > /dev/null 2>&1; then
+    echo "✅ HTTPS endpoint accessible"
+else
+    echo "❌ HTTPS endpoint not accessible"
 fi
 
-# Restart PM2
-echo "🔄 Restarting PM2..."
-pm2 restart cometchat-integrations
+# Check PM2 status
+if pm2 list | grep -q "cometchat-integrations"; then
+    echo "✅ PM2 process running"
+else
+    echo "❌ PM2 process not found"
+fi
 
-# Run the logging fix
-echo "🔧 Running logging fix..."
-./fix-logging-comprehensive.sh
+# Check nginx
+if sudo systemctl is-active nginx > /dev/null 2>&1; then
+    echo "✅ Nginx service active"
+else
+    echo "❌ Nginx service not active"
+fi
 
-echo "🎉 Migration complete!"
+echo "🎉 Migration check complete!"

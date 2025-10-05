@@ -1,18 +1,22 @@
 # CometChat Integrations
 
-A well-architected Node.js Express server for handling CometChat and Telegram integrations with webhook processing, structured logging, and auto-deployment capabilities.
+A production-ready Node.js Express server for handling CometChat and Telegram integrations with webhook processing, comprehensive logging, and auto-deployment capabilities.
 
-## 🏗️ Architecture
+## � Live Deployment
 
-This project follows a clean, modular architecture with clear separation of concerns:
+**Production URL**: https://adityagokula.com/cometchat-integrations/
+
+## �🏗️ Clean Architecture
+
+This project follows a modular architecture with clear separation of concerns:
 
 ```
 cometchat-integrations/
 ├── app.js                      # Main application entry point
-├── index.js                    # Legacy entry point (deprecated)
 ├── package.json                # Project dependencies
 ├── ecosystem.config.js         # PM2 configuration
 ├── .github/workflows/          # GitHub Actions CI/CD
+├── .env.example               # Environment template
 └── src/
     ├── config/                 # Configuration management
     │   └── index.js           # Environment variables & settings
@@ -26,6 +30,7 @@ cometchat-integrations/
     │   └── telegramService.js  # Telegram bot logic
     ├── middleware/             # Express middleware
     │   ├── requestLogger.js    # Request/response logging
+    │   ├── bodyLogger.js       # JSON payload logging
     │   ├── errorHandler.js     # Global error handling
     │   └── webhookAuth.js      # Webhook authentication
     ├── routes/                 # Route definitions
@@ -34,7 +39,8 @@ cometchat-integrations/
     │   ├── cometChatRoutes.js  # CometChat webhook routes
     │   └── telegramRoutes.js   # Telegram webhook routes
     └── utils/                  # Utility functions
-        ├── logger.js           # Structured logging
+        ├── logger.js           # Main logging utility
+        ├── productionLogger.js # Production output
         ├── response.js         # Standardized responses
         └── validator.js        # Input validation
 ```
@@ -42,9 +48,10 @@ cometchat-integrations/
 ## 🚀 Features
 
 - **Clean Architecture**: Modular design with separation of concerns
-- **Structured Logging**: Comprehensive logging with JSON format
+- **Production Logging**: PM2-compatible logging with JSON payloads
 - **Webhook Processing**: Handles CometChat and Telegram webhooks
 - **Auto-deployment**: GitHub Actions CI/CD pipeline
+- **HTTPS/SSL**: Let's Encrypt certificates with auto-renewal
 - **Error Handling**: Centralized error handling and recovery
 - **Input Validation**: Request validation and sanitization
 - **Health Monitoring**: Health checks and system status endpoints
