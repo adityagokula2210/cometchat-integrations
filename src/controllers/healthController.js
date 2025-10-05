@@ -24,6 +24,9 @@ class HealthController {
           },
           telegram: {
             configured: !!config.telegram.botToken
+          },
+          discord: {
+            configured: !!config.discord.botToken
           }
         }
       };
