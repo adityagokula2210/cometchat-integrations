@@ -26,7 +26,7 @@ const bodyLogger = (req, res, next) => {
       logger.info('📄 Full Request Body', {
         method: req.method,
         url: req.url,
-        body: req.body
+        bodyJSON: JSON.stringify(req.body, null, 2)  // Properly stringify the body as JSON
       });
     } else {
       logger.info('⚠️ Empty or Missing Body', {

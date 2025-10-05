@@ -1,6 +1,14 @@
 /**
- * Request Logging Middleware
- * Logs all incoming requests with timing information and body content
+ * Request Logging Middl    // Log request body for POST/PUT/PATCH after it's been parsed
+    if ((method === 'POST' || method === 'PUT' || method === 'PATCH') && req.body) {
+      logger.info('📋 Request body', {
+        method,
+        url,
+        bodyJSON: JSON.stringify(req.body, null, 2),  // Properly stringify as JSON
+        bodyType: typeof req.body,
+        bodySize: JSON.stringify(req.body || {}).length
+      });
+    }ogs all incoming requests with timing information and body content
  */
 
 const logger = require('../utils/logger');

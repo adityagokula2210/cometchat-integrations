@@ -15,7 +15,13 @@ class ProductionLogger {
     if (meta && typeof meta === 'object' && Object.keys(meta).length > 0) {
       const metaStr = Object.entries(meta)
         .filter(([k, v]) => v !== null && v !== undefined)
-        .map(([k, v]) => `${k}=${String(v)}`)
+        .map(([k, v]) => {
+          // Properly stringify objects and arrays as JSON
+          if (typeof v === 'object') {
+            return `${k}=${JSON.stringify(v)}`;
+          }
+          return `${k}=${String(v)}`;
+        })
         .join(' ');
       if (metaStr) {
         output += ` | ${metaStr}`;
