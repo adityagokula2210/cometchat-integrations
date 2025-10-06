@@ -16,7 +16,6 @@ const rootRoutes = require('./src/routes/rootRoutes');
 const healthRoutes = require('./src/routes/healthRoutes');
 const cometChatRoutes = require('./src/routes/cometChatRoutes');
 const telegramRoutes = require('./src/routes/telegramRoutes');
-const discordRoutes = require('./src/routes/discordRoutes');
 
 // Initialize Express app
 const app = express();
@@ -34,7 +33,6 @@ app.use('/', rootRoutes);
 app.use('/', healthRoutes);
 app.use('/', cometChatRoutes);
 app.use('/', telegramRoutes);
-app.use('/', discordRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -53,8 +51,7 @@ app.use((req, res) => {
       status: 'GET /status', 
       root: 'GET /',
       cometchat: 'GET|POST /cometchat',
-      telegram: 'GET|POST /telegram',
-      discord: 'GET|POST /discord'
+      telegram: 'GET|POST /telegram'
     }
   });
 });
@@ -75,8 +72,7 @@ const startServer = () => {
         health: `http://localhost:${PORT}/health`,
         api: `http://localhost:${PORT}/`,
         cometchat: `http://localhost:${PORT}/cometchat`,
-        telegram: `http://localhost:${PORT}/telegram`,
-        discord: `http://localhost:${PORT}/discord`
+        telegram: `http://localhost:${PORT}/telegram`
       }
     });
   });

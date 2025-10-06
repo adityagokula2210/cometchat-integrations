@@ -30,10 +30,6 @@ class RootController {
           telegram: {
             info: 'GET /telegram', 
             webhook: 'POST /telegram'
-          },
-          discord: {
-            info: 'GET /discord',
-            webhook: 'POST /discord'
           }
         },
         documentation: {

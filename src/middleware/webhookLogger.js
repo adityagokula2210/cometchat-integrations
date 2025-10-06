@@ -11,10 +11,9 @@ const webhookLogger = (req, res, next) => {
   const userAgent = req.get('User-Agent') || 'Unknown';
   
   // Determine if this is a webhook endpoint
-  const isWebhook = url.includes('/telegram') || url.includes('/cometchat') || url.includes('/discord');
+  const isWebhook = url.includes('/telegram') || url.includes('/cometchat');
   const webhookService = url.includes('/telegram') ? 'telegram' : 
-                        url.includes('/cometchat') ? 'cometchat' :
-                        url.includes('/discord') ? 'discord' : 'unknown';
+                        url.includes('/cometchat') ? 'cometchat' : 'unknown';
 
   // Log incoming request with enhanced details for webhooks
   if (isWebhook) {
