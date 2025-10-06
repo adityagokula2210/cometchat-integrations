@@ -46,8 +46,12 @@ class CometChatController {
       const result = await cometChatService.processWebhook(body);
 
       // Route message to other platforms if it's a message event
-      if (body.trigger === 'onMessageSent' && body.data && body.data.text) {
-        await CometChatController.routeMessage(body.data);
+      if ((body.trigger === 'onMessageSent' || body.trigger === 'message_sent') && body.data) {
+        // Handle both message wrapper and direct data formats
+        const messageData = body.data.message || body.data;
+        if (messageData && (messageData.text || messageData.data?.text)) {
+          await CometChatController.routeMessage(messageData);
+        }
       }
 
       // Return success response with processing result
@@ -69,19 +73,29 @@ class CometChatController {
    */
   static async routeMessage(cometChatMessage) {
     try {
+      // Handle different message text formats
+      const messageText = cometChatMessage.text || 
+                         cometChatMessage.data?.text || 
+                         (typeof cometChatMessage.data === 'string' ? cometChatMessage.data : '');
+
+      if (!messageText) {
+        logger.warn('CometChat message has no text content to route', { messageId: cometChatMessage.id });
+        return;
+      }
+
       // Convert to standard message format
       const standardMessage = {
         id: `cometchat_${cometChatMessage.id}`,
         source: 'cometchat',
         author: {
-          id: cometChatMessage.sender.uid,
-          name: cometChatMessage.sender.name,
-          displayName: cometChatMessage.sender.name,
+          id: cometChatMessage.sender?.uid || 'unknown',
+          name: cometChatMessage.sender?.name || 'Unknown User',
+          displayName: cometChatMessage.sender?.name || 'Unknown User',
           isBot: false, // CometChat doesn't typically send bot info in webhooks
-          avatar: cometChatMessage.sender.avatar || null
+          avatar: cometChatMessage.sender?.avatar || null
         },
         content: {
-          text: cometChatMessage.text,
+          text: messageText,
           attachments: cometChatMessage.attachments || [],
           metadata: cometChatMessage.metadata || {}
         },
@@ -90,11 +104,18 @@ class CometChatController {
           name: cometChatMessage.receiverType === 'group' ? 'Group Chat' : 'Direct Message',
           type: cometChatMessage.receiverType
         },
-        timestamp: new Date(cometChatMessage.sentAt * 1000),
+        timestamp: new Date(cometChatMessage.sentAt ? cometChatMessage.sentAt * 1000 : Date.now()),
         platform: {
           messageUrl: null // CometChat doesn't provide direct message URLs
         }
       };
+
+      logger.info('Routing CometChat message', {
+        messageId: standardMessage.id,
+        author: standardMessage.author.name,
+        textLength: messageText.length,
+        receiverType: cometChatMessage.receiverType
+      });
 
       // Route to message router
       await messageRouter.routeMessage(standardMessage);

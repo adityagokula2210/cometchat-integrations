@@ -24,18 +24,21 @@ const webhookAuth = (service) => {
       // In production, implement proper signature validation
       
       if (service === 'cometchat') {
-        // Check for basic auth or API key
+        // Check for basic auth or API key (only if webhook secret is configured)
         const authHeader = headers.authorization;
         if (config.cometchat.webhookSecret && authHeader) {
           // Validate authorization header
           logger.debug('CometChat auth header found', { authHeader: authHeader.substring(0, 20) + '...' });
+        } else if (config.cometchat.webhookSecret) {
+          logger.warn('CometChat webhook secret configured but no auth header found');
         }
         
-        // Validate payload structure
+        // Validate payload structure (more permissive)
         const validation = Validator.validateCometChatWebhook(body);
         if (!validation.isValid) {
-          logger.warn('Invalid CometChat webhook payload', { errors: validation.errors });
-          return ResponseHandler.error(res, 'Invalid webhook payload', { errors: validation.errors }, 400);
+          logger.warn('Invalid CometChat webhook payload', { errors: validation.errors, body });
+          // Don't block the request, just log the warning for now
+          // return ResponseHandler.error(res, 'Invalid webhook payload', { errors: validation.errors }, 400);
         }
       }
 

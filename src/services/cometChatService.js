@@ -29,14 +29,19 @@ class CometChatService {
       // Process different types of webhooks
       switch (trigger) {
         case 'message_sent':
+        case 'onMessageSent':
           return await this.handleMessageSent(data);
         case 'message_delivered':
+        case 'onMessageDelivered':
           return await this.handleMessageDelivered(data);
         case 'message_read':
+        case 'onMessageRead':
           return await this.handleMessageRead(data);
         case 'user_online':
+        case 'onUserOnline':
           return await this.handleUserOnline(data);
         case 'user_offline':
+        case 'onUserOffline':
           return await this.handleUserOffline(data);
         default:
           logger.warn('Unknown CometChat webhook trigger', { trigger });
@@ -53,10 +58,11 @@ class CometChatService {
    * Handle message sent event
    */
   async handleMessageSent(data) {
-    const { message } = data;
+    // Handle both data.message format and direct data format
+    const message = data.message || data;
     
-    if (!message) {
-      logger.warn('Message sent webhook missing message data');
+    if (!message || (!message.text && !message.data)) {
+      logger.warn('Message sent webhook missing message data', { data });
       return { processed: false, reason: 'Missing message data' };
     }
 
