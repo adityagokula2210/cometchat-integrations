@@ -58,11 +58,26 @@ class CometChatService {
    * Handle message sent event
    */
   async handleMessageSent(data) {
+    // Log the complete message data structure
+    logger.info('📋 CometChat message data structure', {
+      hasMessage: !!data.message,
+      directData: !!data.id,
+      dataKeys: Object.keys(data),
+      messageKeys: data.message ? Object.keys(data.message) : null,
+      fullMessageData: data
+    });
+
     // Handle both data.message format and direct data format
     const message = data.message || data;
     
     if (!message || (!message.text && !message.data)) {
-      logger.warn('Message sent webhook missing message data', { data });
+      logger.warn('Message sent webhook missing message data', { 
+        data,
+        message,
+        hasText: !!message?.text,
+        hasData: !!message?.data,
+        messageType: typeof message
+      });
       return { processed: false, reason: 'Missing message data' };
     }
 

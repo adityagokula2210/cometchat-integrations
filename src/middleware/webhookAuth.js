@@ -13,12 +13,29 @@ const webhookAuth = (service) => {
     try {
       const { headers, body } = req;
       
-      // Log authentication attempt
+      // Log authentication attempt with payload details
       logger.debug(`Authenticating ${service} webhook`, {
         service,
         headers: Object.keys(headers),
-        hasBody: !!body
+        hasBody: !!body,
+        bodyKeys: body ? Object.keys(body) : [],
+        contentLength: headers['content-length'],
+        contentType: headers['content-type']
       });
+
+      // Log full payload for CometChat webhooks (for debugging)
+      if (service === 'cometchat' && body) {
+        logger.info('🔍 CometChat webhook raw payload', {
+          service: 'cometchat',
+          method: 'webhook_auth',
+          rawPayload: body,
+          payloadSize: JSON.stringify(body).length,
+          trigger: body.trigger,
+          appId: body.appId,
+          hasData: !!body.data,
+          dataStructure: body.data ? (typeof body.data === 'object' ? Object.keys(body.data) : typeof body.data) : null
+        });
+      }
 
       // For now, we'll do basic validation
       // In production, implement proper signature validation

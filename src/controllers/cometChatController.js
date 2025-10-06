@@ -42,6 +42,16 @@ class CometChatController {
     try {
       const { body } = req;
 
+      // Log the complete CometChat webhook payload
+      logger.info('📨 CometChat webhook payload received', {
+        trigger: body.trigger,
+        appId: body.appId,
+        timestamp: new Date().toISOString(),
+        fullPayload: body,
+        dataKeys: body.data ? Object.keys(body.data) : [],
+        hasMessageData: !!(body.data && (body.data.message || body.data.text || body.data.id))
+      });
+
       // Process the webhook through the service (logging handled in middleware)
       const result = await cometChatService.processWebhook(body);
 
@@ -49,8 +59,25 @@ class CometChatController {
       if ((body.trigger === 'onMessageSent' || body.trigger === 'message_sent') && body.data) {
         // Handle both message wrapper and direct data formats
         const messageData = body.data.message || body.data;
+        
+        logger.info('🔄 CometChat message routing check', {
+          trigger: body.trigger,
+          hasData: !!body.data,
+          hasMessageData: !!messageData,
+          hasText: !!(messageData && (messageData.text || messageData.data?.text)),
+          messageDataKeys: messageData ? Object.keys(messageData) : [],
+          willRoute: !!(messageData && (messageData.text || messageData.data?.text))
+        });
+        
         if (messageData && (messageData.text || messageData.data?.text)) {
           await CometChatController.routeMessage(messageData);
+        } else {
+          logger.warn('❌ CometChat message not routed - missing text content', {
+            messageData,
+            hasMessageData: !!messageData,
+            hasText: !!messageData?.text,
+            hasDataText: !!messageData?.data?.text
+          });
         }
       }
 
@@ -73,13 +100,33 @@ class CometChatController {
    */
   static async routeMessage(cometChatMessage) {
     try {
+      // Log the complete message structure for analysis
+      logger.info('📝 CometChat message format analysis', {
+        messageId: cometChatMessage.id,
+        hasText: !!cometChatMessage.text,
+        hasDataText: !!cometChatMessage.data?.text,
+        hasStringData: typeof cometChatMessage.data === 'string',
+        dataType: typeof cometChatMessage.data,
+        messageKeys: Object.keys(cometChatMessage),
+        dataKeys: cometChatMessage.data ? Object.keys(cometChatMessage.data) : null,
+        fullMessage: cometChatMessage
+      });
+
       // Handle different message text formats
       const messageText = cometChatMessage.text || 
                          cometChatMessage.data?.text || 
                          (typeof cometChatMessage.data === 'string' ? cometChatMessage.data : '');
 
       if (!messageText) {
-        logger.warn('CometChat message has no text content to route', { messageId: cometChatMessage.id });
+        logger.warn('❌ CometChat message has no text content to route', { 
+          messageId: cometChatMessage.id,
+          message: cometChatMessage,
+          textSources: {
+            directText: cometChatMessage.text,
+            dataText: cometChatMessage.data?.text,
+            stringData: typeof cometChatMessage.data === 'string' ? cometChatMessage.data : null
+          }
+        });
         return;
       }
 
