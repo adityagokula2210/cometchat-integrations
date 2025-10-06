@@ -56,7 +56,7 @@ class CometChatController {
       const result = await cometChatService.processWebhook(body);
 
       // Route message to other platforms if it's a message event
-      if ((body.trigger === 'onMessageSent' || body.trigger === 'message_sent') && body.data) {
+      if ((body.trigger === 'onMessageSent' || body.trigger === 'message_sent' || body.trigger === 'after_message') && body.data) {
         // Handle both message wrapper and direct data formats
         const messageData = body.data.message || body.data;
         

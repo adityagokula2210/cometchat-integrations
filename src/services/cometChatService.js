@@ -30,6 +30,7 @@ class CometChatService {
       switch (trigger) {
         case 'message_sent':
         case 'onMessageSent':
+        case 'after_message':
           return await this.handleMessageSent(data);
         case 'message_delivered':
         case 'onMessageDelivered':

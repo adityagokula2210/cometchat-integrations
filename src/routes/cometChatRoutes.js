@@ -18,4 +18,10 @@ router.post('/cometchat',
   CometChatController.handleWebhook
 );
 
+// POST /cometchat - Handle CometChat webhooks (with permissive auth)
+router.post('/cometchat', 
+  webhookAuth('cometchat'), 
+  CometChatController.handleWebhook
+);
+
 module.exports = router;
