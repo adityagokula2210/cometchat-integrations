@@ -92,105 +92,63 @@ class DiscordGatewayService {
   }
 
   /**
-   * Handle incoming Discord message - Following existing service patterns
+   * Handle incoming Discord messages
+   * @param {Object} message - Discord message object
    */
-  async handleMessage(message) {
-    try {
-      // Skip bot messages to prevent loops (same as Telegram service pattern)
-      if (message.author.bot) {
-        logger.debug('Skipping bot message', { authorId: message.author.id });
-        return;
-      }
+  handleMessage(message) {
+    // Skip messages from bots to prevent loops
+    if (message.author.bot) {
+      return;
+    }
 
-      // Skip empty messages
-      if (!message.content && message.attachments.size === 0) {
-        logger.debug('Skipping empty message', { messageId: message.id });
-        return;
-      }
-
-      // Create standardized message data (following service patterns)
-      const messageData = {
+    // Log RAW message payload for debugging
+    logger.discord('Raw Discord message payload', {
+      rawMessage: {
         id: message.id,
         content: message.content,
-        author: {
-          id: message.author.id,
-          username: message.author.username,
-          displayName: message.author.displayName || message.author.username,
-          avatar: message.author.displayAvatarURL()
-        },
-        channel: {
-          id: message.channelId,
-          name: message.channel.name,
-          type: message.channel.type
-        },
-        guild: {
-          id: message.guildId,
-          name: message.guild?.name
-        },
-        timestamp: message.createdTimestamp,
-        attachments: message.attachments.map(att => ({
-          id: att.id,
-          name: att.name,
-          url: att.url,
-          size: att.size,
-          contentType: att.contentType
-        })),
-        mentions: message.mentions.users.map(user => ({
-          id: user.id,
-          username: user.username
-        })),
-        isReply: !!message.reference,
-        replyTo: message.reference ? {
-          messageId: message.reference.messageId,
-          channelId: message.reference.channelId
-        } : null
-      };
-
-      // Log message using same pattern as other services
-      logger.discord('message_received', {
-        messageId: message.id,
-        authorId: message.author.id,
-        authorName: message.author.username,
-        channelId: message.channelId,
-        channelName: message.channel.name,
-        guildId: message.guildId,
-        guildName: message.guild?.name,
-        contentLength: message.content.length,
-        hasAttachments: message.attachments.size > 0,
-        contentPreview: message.content.substring(0, 100) + (message.content.length > 100 ? '...' : '')
-      });
-
-      // Console log for immediate visibility (as requested)
-      console.log('\n🎭 DISCORD MESSAGE RECEIVED:');
-      console.log(`📅 Time: ${new Date(messageData.timestamp).toLocaleString()}`);
-      console.log(`👤 Author: ${messageData.author.displayName} (@${messageData.author.username})`);
-      console.log(`🏠 Server: ${messageData.guild.name || 'DM'}`);
-      console.log(`📢 Channel: #${messageData.channel.name || 'Direct Message'}`);
-      console.log(`💬 Content: ${messageData.content || '[No text content]'}`);
-      if (messageData.attachments.length > 0) {
-        console.log(`📎 Attachments: ${messageData.attachments.length}`);
+        author: message.author,
+        channel: message.channel,
+        guild: message.guild,
+        createdAt: message.createdAt,
+        attachments: message.attachments,
+        embeds: message.embeds
       }
-      if (messageData.mentions.length > 0) {
-        console.log(`@️⃣ Mentions: ${messageData.mentions.map(u => u.username).join(', ')}`);
-      }
-      console.log('─'.repeat(60));
+    });
 
-      // TODO: Forward to other platforms (next phase)
-      // await messageForwardingService.forwardDiscordMessage(messageData);
+    // Log message with relevant details
+    logger.discord('Message received', {
+      messageId: message.id,
+      author: {
+        id: message.author.id,
+        username: message.author.username,
+        discriminator: message.author.discriminator
+      },
+      content: message.content,
+      channel: {
+        id: message.channel.id,
+        name: message.channel.name,
+        type: message.channel.type
+      },
+      guild: message.guild ? {
+        id: message.guild.id,
+        name: message.guild.name
+      } : null,
+      timestamp: message.createdAt
+    });
 
-      return {
-        processed: true,
-        messageId: message.id,
-        action: 'message_logged',
-        platform: 'discord'
-      };
-
-    } catch (error) {
-      logger.error('Error handling Discord message', { 
-        messageId: message.id,
-        error: error.message 
-      });
-    }
+    // Enhanced console log for development with prominent channel/guild IDs
+    console.log(`\n🔥 DISCORD MESSAGE RECEIVED 🔥`);
+    console.log(`� CHANNEL ID: ${message.channel.id}`);
+    console.log(`🏰 GUILD ID: ${message.guild?.id || 'N/A'}`);
+    console.log(`👤 Author: ${message.author.username}#${message.author.discriminator}`);
+    console.log(`💬 Content: ${message.content}`);
+    console.log(`� Channel: ${message.channel.name}`);
+    console.log(`🏠 Guild: ${message.guild?.name || 'DM'}`);
+    console.log(`⏰ Time: ${message.createdAt}`);
+    console.log(`\n🔗 FOR BRIDGE CONFIG:`);
+    console.log(`   channelId: '${message.channel.id}',`);
+    console.log(`   guildId: '${message.guild?.id || 'N/A'}',`);
+    console.log(`=====================================\n`);
   }
 
   /**
