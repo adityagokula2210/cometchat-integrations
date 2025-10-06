@@ -1,6 +1,6 @@
 {
   "name": "cometchat-integrations",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "A Node.js project for CometChat integrations",
   "main": "app.js",
   "scripts": {

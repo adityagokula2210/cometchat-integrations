@@ -2,6 +2,8 @@
  * CometChat Integrations Server
  * A well-architected Node.js Express server for handling CometChat and Telegram integrations
  * Now includes Discord Gateway Bot for real-time message listening
+ * 
+ * Version: 2.0.2 - Production deployment with environment configuration
  */
 
 const express = require('express');
