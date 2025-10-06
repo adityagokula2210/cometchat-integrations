@@ -6,30 +6,59 @@
 const logger = require('../utils/logger');
 const bridgeConfig = require('./bridgeConfigService');
 
+// Import API services
+const telegramApiService = require('./telegramApiService');
+const cometChatApiService = require('./cometChatApiService');
+const discordApiService = require('./discordApiService');
+
 class MessageRouterService {
   constructor() {
-    // Will be initialized with API services when they're created
-    this.telegramService = null;
-    this.discordService = null;
-    this.cometChatService = null;
+    // Initialize with API services
+    this.telegramService = telegramApiService;
+    this.discordService = discordApiService;
+    this.cometChatService = cometChatApiService;
     
-    logger.info('Message router service initialized');
-  }
-
-  /**
-   * Initialize with platform API services
-   * @param {Object} services - Object containing platform services
-   */
-  initialize(services) {
-    this.telegramService = services.telegram;
-    this.discordService = services.discord;
-    this.cometChatService = services.cometchat;
-    
-    logger.info('Message router services connected', {
+    logger.info('Message router service initialized with API services', {
       telegram: !!this.telegramService,
       discord: !!this.discordService,
       cometchat: !!this.cometChatService
     });
+  }
+
+  /**
+   * Get routing statistics and test API connections
+   */
+  async getStats() {
+    const stats = {
+      bridgeConfig: bridgeConfig.getConfigSummary(),
+      servicesConnected: {
+        telegram: !!this.telegramService,
+        discord: !!this.discordService,
+        cometchat: !!this.cometChatService
+      },
+      connectionTests: {}
+    };
+
+    // Test API connections
+    try {
+      stats.connectionTests.telegram = await this.telegramService.testConnection();
+    } catch (error) {
+      stats.connectionTests.telegram = false;
+    }
+
+    try {
+      stats.connectionTests.discord = await this.discordService.testConnection();
+    } catch (error) {
+      stats.connectionTests.discord = false;
+    }
+
+    try {
+      stats.connectionTests.cometchat = await this.cometChatService.testConnection();
+    } catch (error) {
+      stats.connectionTests.cometchat = false;
+    }
+
+    return stats;
   }
 
   /**
@@ -95,41 +124,37 @@ class MessageRouterService {
    */
   async sendToTarget(target, message) {
     try {
-      const formattedMessage = this.formatMessageForPlatform(target.platform, message);
+      let formattedMessage;
+      let result;
       
       switch (target.platform) {
         case 'discord':
-          if (this.discordService) {
-            await this.discordService.sendMessage(target.channelId, formattedMessage);
-          } else {
-            logger.warn('Discord service not available');
-          }
+          formattedMessage = this.discordService.formatMessage(message);
+          result = await this.discordService.sendMessage(target.channelId, formattedMessage);
           break;
 
         case 'telegram':
-          if (this.telegramService) {
-            await this.telegramService.sendMessage(target.chatId, formattedMessage);
-          } else {
-            logger.warn('Telegram service not available');
-          }
+          formattedMessage = this.telegramService.formatMessage(message);
+          result = await this.telegramService.sendMessage(target.chatId, formattedMessage);
           break;
 
         case 'cometchat':
-          if (this.cometChatService) {
-            await this.cometChatService.sendMessage(target.groupId, formattedMessage);
-          } else {
-            logger.warn('CometChat service not available');
-          }
+          formattedMessage = this.cometChatService.formatMessage(message);
+          result = await this.cometChatService.sendMessage(target.groupId, formattedMessage);
           break;
 
         default:
           logger.warn('Unknown target platform', { platform: target.platform });
+          return;
       }
 
       logger.debug('Message sent to target', {
         platform: target.platform,
-        targetId: target.channelId || target.chatId || target.groupId
+        targetId: target.channelId || target.chatId || target.groupId,
+        messageId: result.messageId
       });
+
+      return result;
 
     } catch (error) {
       logger.error('Failed to send to target platform', {
@@ -137,6 +162,13 @@ class MessageRouterService {
         error: error.message,
         targetId: target.channelId || target.chatId || target.groupId
       });
+      
+      // Don't throw error to prevent one platform failure from stopping others
+      return {
+        success: false,
+        error: error.message,
+        platform: target.platform
+      };
     }
   }
 
@@ -216,17 +248,39 @@ class MessageRouterService {
   }
 
   /**
-   * Get routing statistics
+   * Get routing statistics and test API connections
    */
-  getStats() {
-    return {
+  async getStats() {
+    const stats = {
       bridgeConfig: bridgeConfig.getConfigSummary(),
       servicesConnected: {
         telegram: !!this.telegramService,
         discord: !!this.discordService,
         cometchat: !!this.cometChatService
-      }
+      },
+      connectionTests: {}
     };
+
+    // Test API connections
+    try {
+      stats.connectionTests.telegram = await this.telegramService.testConnection();
+    } catch (error) {
+      stats.connectionTests.telegram = false;
+    }
+
+    try {
+      stats.connectionTests.discord = await this.discordService.testConnection();
+    } catch (error) {
+      stats.connectionTests.discord = false;
+    }
+
+    try {
+      stats.connectionTests.cometchat = await this.cometChatService.testConnection();
+    } catch (error) {
+      stats.connectionTests.cometchat = false;
+    }
+
+    return stats;
   }
 }
 

@@ -19,8 +19,8 @@ class BridgeConfigService {
         enabled: true,
         platforms: {
           discord: {
-            channelId: 'DISCORD_CHANNEL_ID_PLACEHOLDER', // Will be updated once we get the ID from logs
-            guildId: 'DISCORD_GUILD_ID_PLACEHOLDER'      // Will be updated once we get the ID from logs
+            channelId: '1424612739296530453', // Your actual Discord channel ID
+            guildId: '1424612683738513514'    // Your actual Discord guild ID
           },
           telegram: {
             chatId: '-4969601855'              // Your actual Telegram group ID

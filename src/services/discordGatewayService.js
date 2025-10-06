@@ -8,6 +8,9 @@ const { Client, GatewayIntentBits, Events } = require('discord.js');
 const logger = require('../utils/logger');
 const config = require('../config');
 
+// Import message router for cross-platform messaging
+const messageRouter = require('./messageRouterService');
+
 class DiscordGatewayService {
   constructor() {
     this.client = null;
@@ -95,7 +98,7 @@ class DiscordGatewayService {
    * Handle incoming Discord messages
    * @param {Object} message - Discord message object
    */
-  handleMessage(message) {
+  async handleMessage(message) {
     // Skip messages from bots to prevent loops
     if (message.author.bot) {
       return;
@@ -149,6 +152,65 @@ class DiscordGatewayService {
     console.log(`   channelId: '${message.channel.id}',`);
     console.log(`   guildId: '${message.guild?.id || 'N/A'}',`);
     console.log(`=====================================\n`);
+
+    // Route message to other platforms
+    await this.routeMessage(message);
+  }
+
+  /**
+   * Convert Discord message to standard format and route to other platforms
+   * @param {Object} discordMessage - Discord message object
+   */
+  async routeMessage(discordMessage) {
+    try {
+      // Convert to standard message format
+      const standardMessage = {
+        id: `discord_${discordMessage.id}`,
+        source: 'discord',
+        author: {
+          id: discordMessage.author.id,
+          name: `${discordMessage.author.username}#${discordMessage.author.discriminator}`,
+          displayName: discordMessage.author.displayName || discordMessage.author.username,
+          isBot: discordMessage.author.bot,
+          avatar: discordMessage.author.displayAvatarURL()
+        },
+        content: {
+          text: discordMessage.content,
+          attachments: discordMessage.attachments.size > 0 ? 
+            Array.from(discordMessage.attachments.values()).map(att => ({
+              id: att.id,
+              name: att.name,
+              url: att.url,
+              size: att.size,
+              contentType: att.contentType
+            })) : [],
+          embeds: discordMessage.embeds.length > 0 ? discordMessage.embeds : []
+        },
+        channel: {
+          id: discordMessage.channel.id,
+          name: discordMessage.channel.name,
+          type: discordMessage.channel.type
+        },
+        guild: discordMessage.guild ? {
+          id: discordMessage.guild.id,
+          name: discordMessage.guild.name
+        } : null,
+        timestamp: discordMessage.createdAt,
+        platform: {
+          messageUrl: `https://discord.com/channels/${discordMessage.guild?.id || '@me'}/${discordMessage.channel.id}/${discordMessage.id}`
+        }
+      };
+
+      // Route to message router
+      await messageRouter.routeMessage(standardMessage);
+      
+    } catch (error) {
+      logger.error('Failed to route Discord message', {
+        messageId: discordMessage.id,
+        error: error.message,
+        stack: error.stack
+      });
+    }
   }
 
   /**
