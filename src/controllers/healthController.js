@@ -6,6 +6,7 @@
 const ResponseHandler = require('../utils/response');
 const config = require('../config');
 const logger = require('../utils/logger');
+const discordGatewayService = require('../services/discordGatewayService');
 
 class HealthController {
   /**
@@ -24,6 +25,10 @@ class HealthController {
           },
           telegram: {
             configured: !!config.telegram.botToken
+          },
+          discord: {
+            configured: !!config.discord.botToken,
+            gateway: discordGatewayService.getStatus()
           }
         }
       };

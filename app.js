@@ -1,6 +1,7 @@
 /**
  * CometChat Integrations Server
  * A well-architected Node.js Express server for handling CometChat and Telegram integrations
+ * Now includes Discord Gateway Bot for real-time message listening
  */
 
 const express = require('express');
@@ -16,6 +17,9 @@ const rootRoutes = require('./src/routes/rootRoutes');
 const healthRoutes = require('./src/routes/healthRoutes');
 const cometChatRoutes = require('./src/routes/cometChatRoutes');
 const telegramRoutes = require('./src/routes/telegramRoutes');
+
+// Services
+const discordGatewayService = require('./src/services/discordGatewayService');
 
 // Initialize Express app
 const app = express();
@@ -60,10 +64,10 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 // Start server
-const startServer = () => {
+const startServer = async () => {
   const PORT = config.server.port;
   
-  app.listen(PORT, () => {
+  app.listen(PORT, async () => {
     logger.info('🚀 Server started successfully', {
       port: PORT,
       environment: config.server.env,
@@ -75,16 +79,30 @@ const startServer = () => {
         telegram: `http://localhost:${PORT}/telegram`
       }
     });
+
+    // Initialize Discord Gateway Bot after server starts
+    try {
+      logger.info('🤖 Initializing Discord Gateway Bot...');
+      await discordGatewayService.initialize();
+      logger.info('✅ Discord Gateway Bot initialized successfully');
+    } catch (error) {
+      logger.error('❌ Discord Gateway Bot failed to initialize', { 
+        error: error.message,
+        note: 'Server will continue without Discord Gateway'
+      });
+    }
   });
 
   // Graceful shutdown handling
-  process.on('SIGTERM', () => {
+  process.on('SIGTERM', async () => {
     logger.info('SIGTERM received. Shutting down gracefully...');
+    await discordGatewayService.shutdown();
     process.exit(0);
   });
 
-  process.on('SIGINT', () => {
+  process.on('SIGINT', async () => {
     logger.info('SIGINT received. Shutting down gracefully...');
+    await discordGatewayService.shutdown();
     process.exit(0);
   });
 };
