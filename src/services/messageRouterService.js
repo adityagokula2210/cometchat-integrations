@@ -233,54 +233,39 @@ class MessageRouterService {
    * @param {Object} message - Message to check
    */
   isBotMessage(message) {
-    // Simple bot detection - can be enhanced
+    // Enhanced bot detection to prevent routing loops
     const botNames = [
       'cometchat bot',
       'cometchat-bot', 
       'telegram bot',
       'discord bot',
+      'bridge bot',
       'bot'
     ];
     
     const authorName = message.author.name.toLowerCase();
-    return botNames.some(botName => authorName.includes(botName)) || 
-           message.author.isBot === true;
-  }
-
-  /**
-   * Get routing statistics and test API connections
-   */
-  async getStats() {
-    const stats = {
-      bridgeConfig: bridgeConfig.getConfigSummary(),
-      servicesConnected: {
-        telegram: !!this.telegramService,
-        discord: !!this.discordService,
-        cometchat: !!this.cometChatService
-      },
-      connectionTests: {}
-    };
-
-    // Test API connections
-    try {
-      stats.connectionTests.telegram = await this.telegramService.testConnection();
-    } catch (error) {
-      stats.connectionTests.telegram = false;
+    const isBotByName = botNames.some(botName => authorName.includes(botName));
+    const isBotByFlag = message.author.isBot === true;
+    
+    // Additional check: if message contains bridge format indicators
+    const messageText = message.content.text.toLowerCase();
+    const hasBridgeFormat = messageText.includes('[cometchat]') || 
+                           messageText.includes('[telegram]') || 
+                           messageText.includes('[discord]');
+    
+    const isBot = isBotByName || isBotByFlag || hasBridgeFormat;
+    
+    if (isBot) {
+      logger.debug('Bot message detected, skipping routing', {
+        platform: message.source,
+        author: message.author.name,
+        isBot: message.author.isBot,
+        hasBridgeFormat,
+        messagePreview: message.content.text.substring(0, 50)
+      });
     }
-
-    try {
-      stats.connectionTests.discord = await this.discordService.testConnection();
-    } catch (error) {
-      stats.connectionTests.discord = false;
-    }
-
-    try {
-      stats.connectionTests.cometchat = await this.cometChatService.testConnection();
-    } catch (error) {
-      stats.connectionTests.cometchat = false;
-    }
-
-    return stats;
+    
+    return isBot;
   }
 }
 
