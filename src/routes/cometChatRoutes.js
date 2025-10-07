@@ -6,6 +6,7 @@
 const express = require('express');
 const CometChatController = require('../controllers/cometChatController');
 const webhookAuth = require('../middleware/webhookAuth');
+const logger = require('../utils/logger');
 
 const router = express.Router();
 
@@ -14,12 +15,21 @@ router.get('/cometchat', CometChatController.getInfo);
 
 // POST /cometchat - Handle CometChat webhooks
 router.post('/cometchat', 
-  webhookAuth('cometchat'), 
-  CometChatController.handleWebhook
-);
-
-// POST /cometchat - Handle CometChat webhooks (with permissive auth)
-router.post('/cometchat', 
+  (req, res, next) => {
+    logger.info('🎯 COMETCHAT ROUTE - POST Handler Reached', {
+      method: req.method,
+      url: req.originalUrl,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+      hasBody: !!(req.body && Object.keys(req.body).length > 0),
+      bodyKeys: req.body ? Object.keys(req.body) : [],
+      trigger: req.body ? req.body.trigger : 'No trigger',
+      appId: req.body ? req.body.appId : 'No appId',
+      contentType: req.get('Content-Type'),
+      userAgent: req.get('User-Agent')
+    });
+    next();
+  },
   webhookAuth('cometchat'), 
   CometChatController.handleWebhook
 );
