@@ -17,14 +17,34 @@ const webhookLogger = (req, res, next) => {
 
   // Log incoming request with enhanced details for webhooks
   if (isWebhook) {
-    logger.info('🔔 Webhook request received', {
-      service: webhookService,
-      method,
-      url,
-      ip,
-      userAgent,
-      timestamp: new Date().toISOString()
-    });
+    // Special prominent logging for CometChat webhooks
+    if (webhookService === 'cometchat') {
+      logger.info('🎯 COMETCHAT WEBHOOK ENTRY POINT - Request Received', {
+        service: webhookService,
+        method,
+        url,
+        ip,
+        userAgent,
+        timestamp: new Date().toISOString(),
+        contentType: req.get('Content-Type'),
+        contentLength: req.get('Content-Length'),
+        hasBody: !!(req.body && Object.keys(req.body).length > 0),
+        headers: {
+          authorization: req.get('Authorization') ? 'Present' : 'Missing',
+          'x-forwarded-for': req.get('X-Forwarded-For'),
+          'x-real-ip': req.get('X-Real-IP')
+        }
+      });
+    } else {
+      logger.info('🔔 Webhook request received', {
+        service: webhookService,
+        method,
+        url,
+        ip,
+        userAgent,
+        timestamp: new Date().toISOString()
+      });
+    }
   } else {
     logger.info('📥 Request received', {
       method,
