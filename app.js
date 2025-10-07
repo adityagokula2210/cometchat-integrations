@@ -32,25 +32,6 @@ app.set('trust proxy', config.server.trustProxy);
 // Global middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-
-// Add global request logging for all incoming requests
-app.use((req, res, next) => {
-  logger.info('🌐 APP.JS - Incoming Request', {
-    method: req.method,
-    url: req.originalUrl,
-    ip: req.ip,
-    userAgent: req.get('User-Agent'),
-    timestamp: new Date().toISOString(),
-    isCometChat: req.originalUrl.includes('/cometchat'),
-    headers: {
-      contentType: req.get('Content-Type'),
-      contentLength: req.get('Content-Length'),
-      authorization: req.get('Authorization') ? 'Present' : 'Missing'
-    }
-  });
-  next();
-});
-
 app.use(webhookLogger);  // Unified webhook and request logging
 
 // Routes

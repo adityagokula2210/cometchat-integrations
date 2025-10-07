@@ -42,14 +42,11 @@ class CometChatController {
     try {
       const { body } = req;
 
-      // Log the complete CometChat webhook payload
-      logger.info('📨 CometChat webhook payload received', {
+      // Log essential webhook info
+      logger.info('📨 CometChat webhook processing', {
         trigger: body.trigger,
         appId: body.appId,
-        timestamp: new Date().toISOString(),
-        fullPayload: body,
-        dataKeys: body.data ? Object.keys(body.data) : [],
-        hasMessageData: !!(body.data && (body.data.message || body.data.text || body.data.id))
+        hasData: !!body.data
       });
 
       // Process the webhook through the service (logging handled in middleware)
@@ -60,24 +57,9 @@ class CometChatController {
         // Handle both message wrapper and direct data formats
         const messageData = body.data.message || body.data;
         
-        logger.info('🔄 CometChat message routing check', {
-          trigger: body.trigger,
-          hasData: !!body.data,
-          hasMessageData: !!messageData,
-          hasText: !!(messageData && (messageData.text || messageData.data?.text)),
-          messageDataKeys: messageData ? Object.keys(messageData) : [],
-          willRoute: !!(messageData && (messageData.text || messageData.data?.text))
-        });
-        
         if (messageData && (messageData.text || messageData.data?.text)) {
+          logger.info('🔄 Routing CometChat message', { trigger: body.trigger });
           await CometChatController.routeMessage(messageData);
-        } else {
-          logger.warn('❌ CometChat message not routed - missing text content', {
-            messageData,
-            hasMessageData: !!messageData,
-            hasText: !!messageData?.text,
-            hasDataText: !!messageData?.data?.text
-          });
         }
       }
 
@@ -100,46 +82,34 @@ class CometChatController {
    */
   static async routeMessage(cometChatMessage) {
     try {
-      // Log the complete message structure for analysis
-      logger.info('📝 CometChat message format analysis', {
-        messageId: cometChatMessage.id,
-        hasText: !!cometChatMessage.text,
-        hasDataText: !!cometChatMessage.data?.text,
-        hasStringData: typeof cometChatMessage.data === 'string',
-        dataType: typeof cometChatMessage.data,
-        messageKeys: Object.keys(cometChatMessage),
-        dataKeys: cometChatMessage.data ? Object.keys(cometChatMessage.data) : null,
-        fullMessage: cometChatMessage
-      });
-
       // Handle different message text formats
       const messageText = cometChatMessage.text || 
                          cometChatMessage.data?.text || 
                          (typeof cometChatMessage.data === 'string' ? cometChatMessage.data : '');
 
       if (!messageText) {
-        logger.warn('❌ CometChat message has no text content to route', { 
-          messageId: cometChatMessage.id,
-          message: cometChatMessage,
-          textSources: {
-            directText: cometChatMessage.text,
-            dataText: cometChatMessage.data?.text,
-            stringData: typeof cometChatMessage.data === 'string' ? cometChatMessage.data : null
-          }
+        logger.warn('❌ CometChat message has no text content', { 
+          messageId: cometChatMessage.id
         });
         return;
       }
+
+      // Extract sender information from CometChat webhook payload
+      const senderEntity = cometChatMessage.data?.entities?.sender?.entity;
+      const senderId = cometChatMessage.sender || senderEntity?.uid || 'unknown';
+      const senderName = senderEntity?.name || 'Unknown User';
+      const senderAvatar = senderEntity?.avatar || null;
 
       // Convert to standard message format
       const standardMessage = {
         id: `cometchat_${cometChatMessage.id}`,
         source: 'cometchat',
         author: {
-          id: cometChatMessage.sender?.uid || 'unknown',
-          name: cometChatMessage.sender?.name || 'Unknown User',
-          displayName: cometChatMessage.sender?.name || 'Unknown User',
-          isBot: false, // CometChat doesn't typically send bot info in webhooks
-          avatar: cometChatMessage.sender?.avatar || null
+          id: senderId,
+          name: senderName,
+          displayName: senderName,
+          isBot: false,
+          avatar: senderAvatar
         },
         content: {
           text: messageText,
@@ -157,11 +127,9 @@ class CometChatController {
         }
       };
 
-      logger.info('Routing CometChat message', {
+      logger.info('✅ Message routed successfully', {
         messageId: standardMessage.id,
-        author: standardMessage.author.name,
-        textLength: messageText.length,
-        receiverType: cometChatMessage.receiverType
+        author: standardMessage.author.name
       });
 
       // Route to message router
