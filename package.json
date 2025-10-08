@@ -20,6 +20,8 @@
   },
   "dependencies": {
     "@discordjs/rest": "^2.6.0",
+    "@tripetto/runner": "^8.2.0",
+    "@tripetto/runner-fabric": "^8.0.16",
     "axios": "^1.12.2",
     "discord.js": "^14.22.1",
     "dotenv": "^17.2.3",

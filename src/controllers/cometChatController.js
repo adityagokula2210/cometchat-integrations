@@ -10,6 +10,9 @@ const logger = require('../utils/logger');
 // Import message router for cross-platform messaging
 const messageRouter = require('../services/messageRouterService');
 
+// Import Tripetto service for healthcare workflows
+const tripettoService = require('../services/tripettoService');
+
 class CometChatController {
   /**
    * GET /cometchat - Get CometChat service info
@@ -36,6 +39,68 @@ class CometChatController {
   }
 
   /**
+   * Handle Tripetto healthcare workflow
+   * @param {string} userId - User ID
+   * @param {string} messageText - Message text
+   * @param {string} receiverType - Receiver type (user/group)
+   * @param {string} receiverId - Receiver ID
+   * @param {Object} res - Response object
+   */
+  static async handleTripettoWorkflow(userId, messageText, receiverType, receiverId, res) {
+    try {
+      logger.info('🏥 Starting Tripetto healthcare workflow', {
+        userId,
+        command: messageText,
+        receiverType,
+        receiverId
+      });
+
+      let tripettoResponse;
+
+      // Check if user is continuing an existing conversation
+      const hasActiveConversation = tripettoService.hasActiveConversation(userId);
+
+      if (hasActiveConversation && messageText !== '/care') {
+        // Continue existing conversation
+        tripettoResponse = await tripettoService.processUserResponse(userId, messageText);
+      } else {
+        // Start new healthcare workflow
+        tripettoResponse = await tripettoService.startWorkflow(userId, 'chronious-care');
+      }
+
+      // Send Tripetto response back to CometChat
+      if (tripettoResponse && tripettoResponse.message) {
+        await cometChatService.sendMessage(receiverId, tripettoResponse.message, receiverType);
+        
+        logger.info('✅ Tripetto response sent to CometChat', {
+          userId,
+          responseLength: tripettoResponse.message.length,
+          conversationComplete: tripettoResponse.complete
+        });
+      }
+
+      return ResponseHandler.success(res, {
+        message: 'Tripetto workflow processed successfully',
+        workflowComplete: tripettoResponse?.complete || false,
+        userId
+      });
+
+    } catch (error) {
+      logger.error('❌ Error in Tripetto workflow:', error);
+      
+      // Send error message to user
+      const errorMessage = "Sorry, I'm having trouble accessing the healthcare system right now. Please try again later or contact support.";
+      try {
+        await cometChatService.sendMessage(receiverId, errorMessage, receiverType);
+      } catch (sendError) {
+        logger.error('Failed to send error message to CometChat:', sendError);
+      }
+
+      return ResponseHandler.error(res, 'Failed to process healthcare workflow', 500);
+    }
+  }
+
+  /**
    * POST /cometchat - Handle CometChat webhooks
    */
   static async handleWebhook(req, res) {
@@ -48,6 +113,32 @@ class CometChatController {
         appId: body.appId,
         hasData: !!body.data
       });
+
+      // Check for Tripetto healthcare workflow triggers
+      if (body.trigger === 'after_message' && body.data) {
+        const messageData = body.data.message || body.data;
+        const messageText = messageData.text || messageData.data?.text;
+        const senderId = messageData.sender || messageData.data?.entities?.sender?.entity?.uid;
+        const receiverType = messageData.receiverType || 'user';
+        const receiverId = messageData.receiver || messageData.receiverUid;
+
+        // Check for Tripetto triggers
+        if (messageText && (messageText.startsWith('/care') || tripettoService.hasActiveConversation(senderId))) {
+          logger.info('🏥 Tripetto workflow trigger detected', {
+            userId: senderId,
+            messageText: messageText.substring(0, 50) + '...',
+            isActiveConversation: tripettoService.hasActiveConversation(senderId)
+          });
+
+          return await CometChatController.handleTripettoWorkflow(
+            senderId, 
+            messageText, 
+            receiverType, 
+            receiverId, 
+            res
+          );
+        }
+      }
 
       // Process the webhook through the service (logging handled in middleware)
       const result = await cometChatService.processWebhook(body);
